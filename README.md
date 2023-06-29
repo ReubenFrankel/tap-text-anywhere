@@ -2,6 +2,11 @@
 
 text-anywhere tap class.
 
+This tap uses the `textract` python library (https://github.com/deanmalmgren/textract/), which will read a lot of different files including doing OCR on images.
+
+Note that a lot of this functionality requires os-level programs to be installed. Read the textract install documentation for more information: https://textract.readthedocs.io/en/stable/installation.html
+
+
 Built with the [Meltano Singer SDK](https://sdk.meltano.com).
 
 ## Capabilities
