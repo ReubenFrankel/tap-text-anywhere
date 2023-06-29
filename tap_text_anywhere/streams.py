@@ -12,12 +12,13 @@ from langchain.text_splitter import RecursiveCharacterTextSplitter
 from singer_sdk import typing as th  # JSON Schema typing helpers
 
 from tap_text_anywhere.client import text_anywhereStream
+from hashlib import md5
 
 
 class TextStream(text_anywhereStream):
     """Define custom stream."""
 
-    primary_keys = ["filename"]
+    primary_keys = ["filename", "hash"]
     replication_key = "updated_at"
     # Optionally, you may also use `schema_filepath` in place of `schema`:
     # schema_filepath = SCHEMAS_DIR / "users.json"  # noqa: ERA001
@@ -37,6 +38,7 @@ class TextStream(text_anywhereStream):
             th.StringType,
             description="The last time the file was updated",
         ),
+        th.Property("hash", th.StringType, description="The hash of the chunk"),
     ).to_dict()
 
     def get_records(
@@ -94,14 +96,19 @@ class TextStream(text_anywhereStream):
                         "filename": filename,
                         "textcontent": chunk.page_content,
                         "updated_at": file["LastModified"].isoformat(),
+                        "hash": md5(chunk.page_content.encode("utf-8")).hexdigest(),
                     }
 
             elif self.config["protocol"] == "file":
                 text = textract.process(file["name"])
                 chunks = text_splitter.create_documents([text.decode("utf-8")])
                 for chunk in chunks:
-                    yield {"filename": file, "textcontent": chunk.page_content}
-
+                    yield {
+                        "filename": filename,
+                        "textcontent": chunk.page_content,
+                        "updated_at": file["LastModified"].isoformat(),
+                        "hash": md5(chunk.page_content.encode("utf-8")).hexdigest(),
+                    }
             else:
                 msg = "Don't know that protocol yet"
                 raise NotImplementedError(msg)
