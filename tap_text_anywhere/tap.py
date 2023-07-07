@@ -95,7 +95,7 @@ class Tap_text_anywhere(Tap):
         th.Property(
             "chunk_size",
             th.IntegerType,
-            default="once",
+            default=1000,
             description=("Size of text chunks to make up a record."),
         ),
         th.Property(
