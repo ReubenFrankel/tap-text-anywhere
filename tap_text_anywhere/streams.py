@@ -75,13 +75,18 @@ class TextStream(text_anywhereStream):
             ):
                 continue
             empty = False
+
+            filename = file["name"].split("/")[-1]
+
+            last_modified = file.get("LastModified")
+            updated_at = last_modified and last_modified.iso_format()
+
             if self.config["protocol"] == "s3":
                 if file["LastModified"].isoformat() < self.config["start_date"] or file[
                     "LastModified"
                 ].isoformat() <= self.get_starting_replication_key_value(context):
                     continue
 
-                filename = file["name"].split("/")[-1]
                 tmpfile = tempfile.NamedTemporaryFile(
                     suffix=filename,
                     delete=False,
@@ -95,7 +100,7 @@ class TextStream(text_anywhereStream):
                     yield {
                         "filename": filename,
                         "textcontent": chunk.page_content,
-                        "updated_at": file["LastModified"].isoformat(),
+                        "updated_at": updated_at,
                         "hash": md5(chunk.page_content.encode("utf-8")).hexdigest(),
                     }
 
@@ -106,7 +111,7 @@ class TextStream(text_anywhereStream):
                     yield {
                         "filename": filename,
                         "textcontent": chunk.page_content,
-                        "updated_at": file["LastModified"].isoformat(),
+                        "updated_at": updated_at,
                         "hash": md5(chunk.page_content.encode("utf-8")).hexdigest(),
                     }
             else:
