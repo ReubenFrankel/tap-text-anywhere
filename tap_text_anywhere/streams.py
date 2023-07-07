@@ -75,13 +75,15 @@ class TextStream(text_anywhereStream):
             ):
                 continue
             empty = False
+
+            filename = file["name"].split("/")[-1]
+
             if self.config["protocol"] == "s3":
                 if file["LastModified"].isoformat() < self.config["start_date"] or file[
                     "LastModified"
                 ].isoformat() <= self.get_starting_replication_key_value(context):
                     continue
 
-                filename = file["name"].split("/")[-1]
                 tmpfile = tempfile.NamedTemporaryFile(
                     suffix=filename,
                     delete=False,
