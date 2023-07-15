@@ -17,8 +17,8 @@ from hashlib import md5
 
 class TextStream(text_anywhereStream):
     """Define custom stream."""
-
-    primary_keys = ["filename", "hash"]
+    
+    primary_keys = ["filename", "part_number"]
     replication_key = "updated_at"
     # Optionally, you may also use `schema_filepath` in place of `schema`:
     # schema_filepath = SCHEMAS_DIR / "users.json"  # noqa: ERA001
@@ -39,6 +39,7 @@ class TextStream(text_anywhereStream):
             description="The last time the file was updated",
         ),
         th.Property("hash", th.StringType, description="The hash of the chunk"),
+        th.Property("part_number", th.IntegerType, description="chunk number")
     ).to_dict()
 
     def get_records(
@@ -79,7 +80,7 @@ class TextStream(text_anywhereStream):
             filename = file["name"].split("/")[-1]
 
             last_modified = file.get("LastModified")
-            updated_at = last_modified and last_modified.iso_format()
+            updated_at = last_modified and last_modified.isoformat()
 
             if self.config["protocol"] == "s3":
                 if file["LastModified"].isoformat() < self.config["start_date"] or file[
@@ -96,22 +97,24 @@ class TextStream(text_anywhereStream):
 
                 text = textract.process(tmpfile)
                 chunks = text_splitter.create_documents([text.decode("utf-8")])
-                for chunk in chunks:
+                for i, chunk in enumerate(chunks):
                     yield {
                         "filename": filename,
                         "textcontent": chunk.page_content,
                         "updated_at": updated_at,
+                        "part_number": i,
                         "hash": md5(chunk.page_content.encode("utf-8")).hexdigest(),
                     }
 
             elif self.config["protocol"] == "file":
                 text = textract.process(file["name"])
                 chunks = text_splitter.create_documents([text.decode("utf-8")])
-                for chunk in chunks:
+                for i, chunk in enumerate(chunks):
                     yield {
                         "filename": filename,
                         "textcontent": chunk.page_content,
                         "updated_at": updated_at,
+                        "part_number": i,
                         "hash": md5(chunk.page_content.encode("utf-8")).hexdigest(),
                     }
             else:
