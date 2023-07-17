@@ -17,8 +17,8 @@ from hashlib import md5
 
 class TextStream(text_anywhereStream):
     """Define custom stream."""
-    
-    primary_keys = ["filename", "part_number"]
+
+    primary_keys = ["filename", "part_number", "hash"]
     replication_key = "updated_at"
     # Optionally, you may also use `schema_filepath` in place of `schema`:
     # schema_filepath = SCHEMAS_DIR / "users.json"  # noqa: ERA001
